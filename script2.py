@@ -1,16 +1,14 @@
 import sys
 import re
 
-def CNC(argv):
+def CNC(fileName):
     lines1=[]
     lines2=[]
     lines3=[]
-    valuesX=[]
-    valuesY=[]
     vrtaniPoradi={}
 
     # open and read file for CNC
-    file1 = open(argv[1], "r") 
+    file1 = open(fileName, "r") 
     lines1=file1.readlines()
     file1.close()
     vrtani=0
@@ -34,17 +32,16 @@ def CNC(argv):
                 souradniceX=re.findall("^X.[0-9]*[.,][0-9]*",souradnice[0])
                 souradniceX=re.sub("X","",souradniceX[0])
                 souradniceX=float(souradniceX)
-                valuesX.append(souradniceX)
-                
-                # Select Y direction and add 10 to one where X>50
-                souradniceY=re.findall("Y.[0-9]*[.,][0-9]*$",souradnice[0])
-                souradniceY=re.sub("Y","",souradniceY[0])
-                souradniceY=float(souradniceY)
-                valuesY.append(souradniceY)
+                # valuesX.append(souradniceX)
                 if souradniceX>50:
+                    # Select Y direction and add 10 to one where X>50
+                    souradniceY=re.findall("Y.[0-9]*[.,][0-9]*$",souradnice[0])
+                    souradniceY=re.sub("Y","",souradniceY[0])
+                    souradniceY=float(souradniceY)
                     souradniceY10=souradniceY+10
                     lineNew=re.sub(str(souradniceY),str(souradniceY10),line) 
                     line=lineNew   
+                    
                 # Choose line with tool definition T0X
                 nastroj=re.findall("T[0-9]{2}$",line)
                 if nastroj!=[]:
@@ -70,14 +67,48 @@ def CNC(argv):
     for line in lines2:
         file2.write(str(line))
     file2.close()            
+                  
+    
+def extremeCoords(fileName):
+    lines1=[]
+    valuesX=[]
+    valuesY=[]
+
+    # open and read file for CNC
+    file1 = open(fileName, "r") 
+    lines1=file1.readlines()
+    file1.close()
+    vrtani=0
+
+    for line in lines1:
+        # Define part for drilling and modification
+        if re.findall("Zacatek bloku vrtani",line)!=[]:
+            vrtani=1          
+        elif re.findall("Konec bloku vrtani",line)!=[]:
+            vrtani=0
+        
+        if vrtani==1:
+            souradnice=re.findall("^X.[0-9]*[.,][0-9]*Y.[0-9]*[.,][0-9]*",line)
+            if souradnice!=[]:
+                souradniceX=re.findall("^X.[0-9]*[.,][0-9]*",souradnice[0])
+                souradniceX=re.sub("X","",souradniceX[0])
+                souradniceX=float(souradniceX)
+                valuesX.append(souradniceX)
+
+                souradniceY=re.findall("Y.[0-9]*[.,][0-9]*$",souradnice[0])
+                souradniceY=re.sub("Y","",souradniceY[0])
+                souradniceY=float(souradniceY)
+                valuesY.append(souradniceY)
+           
                 
     # Created file with min and max of X and Y coordinates
     file3=open("souradniceExtreme.txt","w")
     file3.write("X_min/X_max/Y_min/Y_max\n")
     file3.write("{}/{}/{}/{}".format(min(valuesX),max(valuesX),min(valuesY),max(valuesY)))
-    file3.close()    
+    file3.close()   
 
 if __name__ == "__main__":
-    CNC(sys.argv)
+    globals()[sys.argv[1]](sys.argv[2])
+    # CNC(sys.argv)
 
     
